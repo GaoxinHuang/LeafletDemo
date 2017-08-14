@@ -13,6 +13,8 @@
     <script src="https://unpkg.com/esri-leaflet-geocoder@2.2.4"></script>
 
     <script type="text/javascript">
+        var identifiedFeature;
+        var listIdentifiedFeature = [];
         $(document).ready(function () {
             var URL_Regions_MS = "https://gis.interpret.co.nz/arcgis/rest/services/TAC/regionsv3/MapServer";
             var map = L.map('map', {
@@ -20,13 +22,43 @@
             }).setView([-36.644259, 144.961057], 7);
             L.esri.basemapLayer("DarkGray").addTo(map);
 
-            L.esri.dynamicMapLayer({
+            var dynLayer = L.esri.dynamicMapLayer({
                 url: URL_Regions_MS,
                 layers: [0],
                 useCors: false,
                 opacity: 1
             }).addTo(map);
             //            dynLayer.addTo(map);
+            map.on('click',
+                function (e) {
+                    //自己研究的, 如果没有 bootstrap modal 去锁屏幕的话
+                    //for (var i = 0; i < listIdentifiedFeature.length; i++) {
+                    //    if (listIdentifiedFeature[i]) {
+                    //        var feature = listIdentifiedFeature[i];
+                    //        map.removeLayer(feature);
+                    //    }
+                    //}
+                    //for (var j = 0; j < listIdentifiedFeature.length; j++) {
+                    //    listIdentifiedFeature.splice(j, 1);
+                    //}
+
+                    if (identifiedFeature) {
+                        map.removeLayer(identifiedFeature);
+                    }
+
+                    dynLayer.identify().layers('0').tolerance(5).simplify(map, 1).on(map).at(e.latlng).run(function (error, featureCollection_) {
+                        if (featureCollection_.features.length > 0) {
+                            console.log(featureCollection_.features[0]);
+                            identifiedFeature = L.geoJSON(featureCollection_.features[0]).addTo(map); //identifiedFeature 这里是被选中的layer
+                            var soilDescription = featureCollection_.features[0].properties['VGREG'];//这里的VGREG是找出 region, 这是公司自己设定的
+                            var selectedEntity = soilDescription;
+                            console.log("selectedEntity:" + selectedEntity);
+                            console.log(identifiedFeature); //identifiedFeature 这里是被选中的layer
+                            //listIdentifiedFeature.push(identifiedFeature); ////自己研究的, 如果没有 bootstrap modal 去锁屏幕的话
+                        }
+                    });
+                   
+                });
         });
     </script>
 }
