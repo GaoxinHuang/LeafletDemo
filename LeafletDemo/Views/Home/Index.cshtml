@@ -1,0 +1,32 @@
+﻿<div class="jumbotron">
+    <h1>ASP.NET</h1>
+    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS, and JavaScript.</p>
+    <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+</div>
+<div id="map">
+
+</div>
+
+@section scripts {
+    <script src="https://unpkg.com/esri-leaflet@2.0.8"></script>
+    <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder@2.2.4/dist/esri-leaflet-geocoder.css">
+    <script src="https://unpkg.com/esri-leaflet-geocoder@2.2.4"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var URL_Regions_MS = "https://gis.interpret.co.nz/arcgis/rest/services/TAC/regionsv3/MapServer";
+            var map = L.map('map', {
+                minZoom: 4
+            }).setView([-36.644259, 144.961057], 7);
+            L.esri.basemapLayer("DarkGray").addTo(map);
+
+            L.esri.dynamicMapLayer({
+                url: URL_Regions_MS,
+                layers: [0],
+                useCors: false,
+                opacity: 1
+            }).addTo(map);
+            //            dynLayer.addTo(map);
+        });
+    </script>
+}
