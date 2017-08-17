@@ -1,53 +1,109 @@
 ﻿
-@{
-    Layout = null;
-}
-
-<html>
-<head>
-    <meta charset=utf-8 />
-    <title>Esri Leaflet Quickstart</title>
-    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
 
-    <!-- Load Leaflet from CDN-->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
-          integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
-          crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
-            integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
-            crossorigin=""></script>
-
-
-    <!-- Load Esri Leaflet from CDN -->
-    <script src="https://unpkg.com/esri-leaflet@2.1.0/dist/esri-leaflet.js"
-            integrity="sha512-Tojl3UMd387f6DdAJlo+fKfJZiP55fYT+6Y58yKbHydnueOdSFOxrgLPuUxm7VW1szEt3hZVwv3V2sSUCuT35w=="
-            crossorigin=""></script>
-
-
-    <style>
-        body { margin:0; padding:0; }
-        #map { position: absolute; top:0; bottom:0; right:0; left:0; }
-    </style>
-</head>
-<body>
 
 <div id="map"></div>
 
-<script>
-  
-    var map = L.map("map").setView([-36.644259, 144.961057], 5);
+<button type="button" onClick="Get_district('All')">Click me</button>
+@section scripts{
+    <script type="text/javascript">
+        var districtsLayer;
+        var region = "WEST";
+        var previousIds;
+        var selectedFeature;
+        $(document).ready(function () {
+            //var map = L.map("map").setView([-36.644259, 144.961057], 7);
+            var map = L.map('map', {
+                minZoom: 4
+            }).setView([-36.644259, 144.961057], 7);
 
-    L.esri.basemapLayer("Topographic").addTo(map);
+            L.esri.basemapLayer("DarkGray").addTo(map);
+            L.esri.basemapLayer('GrayLabels').addTo(map);
+            var URL_Districts_FS = "https://gis.interpret.co.nz/arcgis/rest/services/TAC/regionsv2/FeatureServer/4";
+            var query_ = "PFI = \'" + region + "\'";
+             districtsLayer = L.esri.featureLayer({
+                url: URL_Districts_FS,
+                simplifyFactor: 0.5,
+                precision: 5
+            }).setWhere(query_).addTo(map);
 
-    var URL_Regions_MS = "https://gis.interpret.co.nz/arcgis/rest/services/TAC/regionsv3/MapServer";
-    L.esri.dynamicMapLayer({
-        url: URL_Regions_MS,
-        layers: [0],
-        useCors: false,
-        opacity: 1
-    }).addTo(map);
-</script>
+            map.on('click', function (e) {
+                districtsLayer.query().intersects(e.latlng).run(function (error, Featresults) {
+                    // if we find a match dig into the feature attributes to retrive median age
+                    if (Featresults.features.length > 0) {
+                        districtsLayer.resetStyle(previousIds);
+                        previousIds = Featresults;
+                        selectedFeature = Featresults.features[0].geometry;
+                        console.log(selectedFeature);
+                        try {
+                            districtsLayer.setFeatureStyle(Featresults.features[0].properties.OBJECTID, {
+                                color: '#c2631e',
+                                weight: 2,
+                                fillColor: '#c2631e',
+                                fillOpacity: 0.5
+                            });
+                        } catch (err) {
+                        }
+                      var  selected_region = Featresults.features[0].properties.subdiv_code;
+                        var districtCode = Featresults.features[0].properties.district_code;
+                    }
+                });
+            });
 
-</body>
-</html>
+        });
+
+        // Get informations from the district ID (ZOOM & select the feature)
+        function Get_district(str_districtID) {
+            districtsLayer.query().where('subdiv_code =\'' + str_districtID + '\'').run(function (error, Featresults) {
+                var districtCode;
+                // if we find a match dig into the feature attributes to retrive median age
+                if (Featresults.features.length > 0) {
+                    districtsLayer.resetStyle(previousIds);
+                    previousIds = Featresults;
+                    selectedFeature = Featresults.features[0].geometry;
+                    try {
+                        districtsLayer.setFeatureStyle(Featresults.features[0].properties.OBJECTID, {
+                            color: '#c2631e',
+                            weight: 2,
+                            fillColor: '#c2631e',
+                            fillOpacity: 0.5
+                        });
+                    } catch (err) {
+                    }
+//                    var selected_region = Featresults.features[0].properties.subdiv_code;
+//                    $("#selecteddistrictlabel").text("Selected division : " + selected_region);
+//                    $("#selecteddistrictlabelbis").text("Selected division : " + selected_region);
+                    districtCode = Featresults.features[0].properties.district_code;
+                    // Update the LGA partial component
+//                    get_model_charts();
+//                    $("#DvDpartialLGA").load('@(Url.Action("partialLGAResult", "Home", null, Request.Url.Scheme))?locations=' + districtCode, function () {
+//                        ChangeSizeHeight();
+//                    });
+
+                }
+                else {
+                    // change the label
+                    $("#selecteddistrictlabel").text("Selected division : All");
+                    $("#selecteddistrictlabelbis").text("Selected division : All");
+
+                    // Remove selection layer
+                    districtsLayer.resetStyle(previousIds);
+
+                    districtCode = regionforchart;
+                    selected_region = regionforchart;
+
+                    // Update the LGA partial component
+                    get_model_charts();
+                    regionModel = regionModel.replace(" ", "%20");
+
+                    $("#DvDpartialLGA").load('@(Url.Action("partialLGAResult", "Home", null, Request.Url.Scheme))?locations=All_' + regionModel.replace(" ","%20"), function () {
+                        ChangeSizeHeight();
+                    });
+                }
+                $('#Spinner').hide();
+            });
+        }
+    </script>
+}
+
+

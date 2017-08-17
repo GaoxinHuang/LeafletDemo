@@ -27,7 +27,7 @@ namespace LeafletDemo
 
             // leaflet
             bundles.Add(new ScriptBundle("~/plugins/leaflet").Include(
-                "~/Scripts/leaflet/leaflet.js"));
+                "~/Scripts/leaflet/leaflet.js", "~/Scripts/leaflet/esri-leaflet.js"));
 
             // toastr notification styles
             bundles.Add(new StyleBundle("~/plugins/leafletStyle").Include(
